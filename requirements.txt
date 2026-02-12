@@ -1,0 +1,11 @@
+Flask==3.0.0                  # Web framework
+flask-cors==4.0.0             # CORS support
+Flask-SQLAlchemy==3.1.1       # Database ORM
+psycopg2-binary==2.9.9        # PostgreSQL
+marshmallow==3.20.1           # Input validation
+flask-marshmallow==0.15.0     # Marshmallow + Flask
+Flask-Bcrypt==1.0.1           # Password security
+python-dotenv==1.0.0          # Environment config
+pytest==7.4.3                 # Testing
+pytest-flask==1.3.0           # Flask testing
+flasgger==0.9.7.1            # API documentation
