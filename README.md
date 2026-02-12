@@ -13,17 +13,24 @@ npm install
 cp .env.example .env
 # Edit .env with your MySQL credentials
 
-# Create database
-mysql -u root -p
-CREATE DATABASE geektext;
-exit;
-
-# Run schema
-mysql -u root -p geektext < database/schema.sql
-mysql -u root -p geektext < database/migrations/seed_data.sql
-
-# Start development server
+# Development mode (auto-restarts on file changes)
 npm run dev
+
+# OR production mode
+npm start
 
 # Test
 curl http://localhost:5000/api/health
+
+Working Server Example:
+
+╔════════════════════════════════════════════════╗
+║                                                ║
+║         Geek Text API Server Running          ║
+║                                                ║
+╚════════════════════════════════════════════════╝
+
+  Environment: development
+  Port:        5000
+  URL:         http://localhost:5000
+  Health:      http://localhost:5000/api/health
