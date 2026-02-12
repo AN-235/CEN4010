@@ -6,14 +6,24 @@ git clone <https://github.com/AN-235/CEN4010>
 
 cd CEN4010
 
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-# Windows:
-venv\Scripts\activate
-# Mac/Linux:
-source venv/bin/activate
-
 # Install dependencies
-pip install -r requirements.txt
+npm install
+
+# Set up environment
+cp .env.example .env
+# Edit .env with your MySQL credentials
+
+# Create database
+mysql -u root -p
+CREATE DATABASE geektext;
+exit;
+
+# Run schema
+mysql -u root -p geektext < database/schema.sql
+mysql -u root -p geektext < database/migrations/seed_data.sql
+
+# Start development server
+npm run dev
+
+# Test
+curl http://localhost:5000/api/health
