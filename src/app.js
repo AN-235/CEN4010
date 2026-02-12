@@ -228,7 +228,7 @@ const startServer = async () => {
   app.listen(PORT, () => {
     console.log('\n╔════════════════════════════════════════════════╗');
     console.log('║                                                ║');
-    console.log('║         Geek Text API Server Running          ║');
+    console.log('║          BookStore API Server Running          ║');
     console.log('║                                                ║');
     console.log('╚════════════════════════════════════════════════╝\n');
     console.log(`  Environment: ${process.env.NODE_ENV || 'development'}`);
