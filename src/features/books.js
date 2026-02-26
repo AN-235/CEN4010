@@ -13,10 +13,24 @@ const router = express.Router();
 router.get('/genre/:genre', (req, res) => {
     const genre = req.params.genre;
     
-    // TODO: Write MySQL query to find books by this genre
-    
-    res.status(200).json({ 
-        message: `This will return books in the ${genre} genre.` 
+   const sql = `
+        SELECT Book_ID, Title, Author, Genre, Price
+        FROM BOOKS
+        WHERE Genre = ?
+    `;
+
+    db.query(sql, [genre], (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: "No books found for this genre" });
+        }
+
+
+    res.status(200).json(results);
     });
 });
 
