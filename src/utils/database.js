@@ -1,7 +1,7 @@
 /**
  * Database Connection Pool
  * MySQL connection using mysql2 with promise wrapper
- * 
+ *
  * This file handles all database connections for the API
  */
 
@@ -17,19 +17,19 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'geektext',
   waitForConnections: true,
-  connectionLimit: 10,           // Maximum 10 concurrent connections
-  queueLimit: 0,                 // No limit on queued requests
+  connectionLimit: 10, // Maximum 10 concurrent connections
+  queueLimit: 0, // No limit on queued requests
   enableKeepAlive: true,
   keepAliveInitialDelay: 0
 });
 
 /**
  * Execute a SQL query
- * 
+ *
  * @param {string} sql - SQL query string
  * @param {Array} params - Query parameters (prevents SQL injection)
- * @returns {Promise} Query results
- * 
+ * @returns {Promise<Array|Object>} Query results
+ *
  * @example
  * const books = await query('SELECT * FROM books WHERE genre = ?', ['Fiction']);
  */
@@ -40,6 +40,7 @@ async function query(sql, params = []) {
   } catch (error) {
     console.error('Database query error:', error.message);
     console.error('SQL:', sql);
+    console.error('Params:', params);
     throw error;
   }
 }
@@ -47,9 +48,9 @@ async function query(sql, params = []) {
 /**
  * Get a connection from the pool
  * Use this when you need to run multiple queries in a transaction
- * 
- * @returns {Promise} Database connection
- * 
+ *
+ * @returns {Promise<Object>} Database connection
+ *
  * @example
  * const connection = await getConnection();
  * try {
@@ -64,7 +65,12 @@ async function query(sql, params = []) {
  * }
  */
 async function getConnection() {
-  return await pool.getConnection();
+  try {
+    return await pool.getConnection();
+  } catch (error) {
+    console.error('Error getting database connection:', error.message);
+    throw error;
+  }
 }
 
 /**
@@ -72,8 +78,13 @@ async function getConnection() {
  * Call this when shutting down the server
  */
 async function end() {
-  await pool.end();
-  console.log('Database pool closed');
+  try {
+    await pool.end();
+    console.log('Database pool closed');
+  } catch (error) {
+    console.error('Error closing database pool:', error.message);
+    throw error;
+  }
 }
 
 /**
@@ -81,13 +92,19 @@ async function end() {
  * Returns true if connected, false otherwise
  */
 async function testConnection() {
+  let connection;
+
   try {
-    const connection = await pool.getConnection();
+    connection = await pool.getConnection();
     await connection.ping();
-    connection.release();
     return true;
   } catch (error) {
+    console.error('Database connection test failed:', error.message);
     return false;
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 }
 
