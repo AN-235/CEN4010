@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+    body{
+    background-color: #e6f2ff;
+    justify-content: center;
+    align-items center;
+    margin:0;
+    }
+
+    .container {
+        text-align: center;
+        padding: 30px;
+        border-radius: 10px;
+        }
+    </style>
+    <title>Title</title>
+</head>
+<body>
+<div class="container">
+    <h2>SHOPPING CART DEMO</h2>
+<label> User ID:</label>
+<input type="number" id="userId" value="1">
+<button onclick="loadCart()">Cart</button>
+
+<hr>
+
+<h3> Cart Items</h3>
+    <div id ="cart"></div>
+<h3>Subtotal</h3>
+<div id ="subtotal"></div>
+
+<script>
+
+async function loadCart()
+    {
+    const userId = document.getElementById("userId").value;
+
+    const res = await fetch(`/api/cart/${userId}`);
+    const data = await res.json();
+
+    let output = "";
+    if(data.length ===0)
+    {
+    output = "Cart is empty";
+    }
+    else
+    {
+    data.forEach(item => { output += `<p>${item.title} - $${item.price} (x${item.quantity})</p>`;
+        });
+    }
+    document.getElementById("cart").innerHTML = output;
+
+    const subRes = await fetch(`/api/cart/${userId}/subtotal`);
+    const subData = await subRes.json();
+
+    document.getElementById("subtotal").innerHTML = "$" + subData.subtotal;
+    }
+
+
+
+</script>
+</body>
+</html>
