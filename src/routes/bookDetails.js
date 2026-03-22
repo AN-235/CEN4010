@@ -314,6 +314,26 @@ router.delete('/books/:isbn', async (req, res, next) => {
  *   publisher: string
  * }
  */
+
+// Add this endpoint (around line 320)
+router.get('/authors', async (req, res, next) => {
+  try {
+    const authors = await db.query(
+      'SELECT id, first_name, last_name, publisher FROM authors ORDER BY last_name, first_name'
+    );
+    
+    res.json(authors.map(author => ({
+      id: author.id,
+      first_name: author.first_name,
+      last_name: author.last_name,
+      full_name: `${author.first_name} ${author.last_name}`,
+      publisher: author.publisher
+    })));
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.post('/authors', async (req, res, next) => {
   try {
     const { first_name, last_name, biography, publisher } = req.body;

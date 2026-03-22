@@ -30,6 +30,8 @@ app.use(cors());
 // Parse JSON request bodies
 app.use(express.json());
 
+app.use(express.static('public'));
+
 // Parse URL-encoded request bodies
 app.use(express.urlencoded({ extended: true }));
 
@@ -234,6 +236,7 @@ const startServer = async () => {
     console.log(`  Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`  Port:        ${PORT}`);
     console.log(`  URL:         http://localhost:${PORT}`);
+    console.log(`  ADMIN URL:   http://localhost:${PORT}/admin.html`);
     console.log(`  Health:      http://localhost:${PORT}/api/health`);
     console.log('\n  Press Ctrl+C to stop the server\n');
     console.log('════════════════════════════════════════════════\n');
