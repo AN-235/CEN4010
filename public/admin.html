@@ -491,18 +491,49 @@
         });
 
         // Load and display authors
-        async function loadAuthors() {
-            const container = document.getElementById('authors-list');
-            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading authors...</p></div>';
+async function loadAuthors() {
+    const container = document.getElementById('authors-list');
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading authors...</p></div>';
 
-            try {
-                // Note: You'll need to add a GET /api/admin/authors endpoint
-                // For now, this will show an example
-                container.innerHTML = '<p>Author listing endpoint needs to be added to the backend.</p><p>Each author can be viewed individually by ID.</p>';
-            } catch (error) {
-                container.innerHTML = `<p class="error">Error loading authors: ${error.message}</p>`;
-            }
+    try {
+        const response = await fetch(`${API_URL}/authors`);
+        
+        if (!response.ok) {
+            throw new Error('Failed to load authors');
         }
+        
+        const data = await response.json();
+
+        if (data.authors && data.authors.length > 0) {
+            container.innerHTML = `
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3>${data.total}</h3>
+                        <p>Total Authors</p>
+                    </div>
+                </div>
+                ${data.authors.map(author => `
+                    <div class="item-card">
+                        <h3>${author.full_name}</h3>
+                        <p><strong>Publisher:</strong> ${author.publisher}</p>
+                        <p><strong>Biography:</strong> ${author.biography}</p>
+                        <p><strong>Books Published:</strong> ${author.book_count}</p>
+                        <p style="font-size: 0.8em; color: #999; margin-top: 10px;">
+                            Author ID: ${author.id} | Joined: ${new Date(author.created_at).toLocaleDateString()}
+                        </p>
+                    </div>
+                `).join('')}
+            `;
+        } else {
+            container.innerHTML = '<p>No authors found. Create your first author!</p>';
+        }
+    } catch (error) {
+        container.innerHTML = `<p style="color: #721c24; padding: 20px; background: #f8d7da; border-radius: 6px;">
+            Error loading authors: ${error.message}<br>
+            Make sure the server is running and the endpoint exists.
+        </p>`;
+    }
+}
 
         // Load and display books
         async function loadBooks() {

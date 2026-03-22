@@ -315,20 +315,55 @@ router.delete('/books/:isbn', async (req, res, next) => {
  * }
  */
 
-// Add this endpoint (around line 320)
+/**
+ * GET /api/admin/authors
+ * Get all authors
+ */
 router.get('/authors', async (req, res, next) => {
   try {
-    const authors = await db.query(
-      'SELECT id, first_name, last_name, publisher FROM authors ORDER BY last_name, first_name'
+    // Get all authors
+    const authorsQuery = `
+      SELECT 
+        id,
+        first_name,
+        last_name,
+        biography,
+        publisher,
+        created_at
+      FROM authors
+      ORDER BY last_name, first_name
+    `;
+
+    const authors = await db.query(authorsQuery);
+
+    // Get book count for each author
+    const authorsWithBooks = await Promise.all(
+      authors.map(async (author) => {
+        const bookCountQuery = `
+          SELECT COUNT(*) as count 
+          FROM books 
+          WHERE author_id = ?
+        `;
+        const [bookCount] = await db.query(bookCountQuery, [author.id]);
+        
+        return {
+          id: author.id,
+          first_name: author.first_name,
+          last_name: author.last_name,
+          full_name: `${author.first_name} ${author.last_name}`,
+          biography: author.biography,
+          publisher: author.publisher,
+          book_count: bookCount.count,
+          created_at: author.created_at
+        };
+      })
     );
-    
-    res.json(authors.map(author => ({
-      id: author.id,
-      first_name: author.first_name,
-      last_name: author.last_name,
-      full_name: `${author.first_name} ${author.last_name}`,
-      publisher: author.publisher
-    })));
+
+    // Return in the format frontend expects
+    res.json({
+      total: authorsWithBooks.length,
+      authors: authorsWithBooks
+    });
   } catch (error) {
     next(error);
   }
@@ -539,42 +574,18 @@ router.put('/authors/:authorId', async (req, res, next) => {
  * - page: page number (default: 1)
  * - limit: items per page (default: 20)
  */
+/**
+ * GET /api/admin/books
+ * Get all books with optional filters and pagination
+ */
+/**
+ * GET /api/admin/books
+ * Get all books
+ */
 router.get('/books', async (req, res, next) => {
+  
   try {
-    const {
-      genre,
-      publisher,
-      page = 1,
-      limit = 20
-    } = req.query;
-
-    const offset = (page - 1) * limit;
-    const conditions = [];
-    const params = [];
-
-    if (genre) {
-      conditions.push('b.genre LIKE ?');
-      params.push(`%${genre}%`);
-    }
-
-    if (publisher) {
-      conditions.push('b.publisher LIKE ?');
-      params.push(`%${publisher}%`);
-    }
-
-    const whereClause = conditions.length > 0 
-      ? `WHERE ${conditions.join(' AND ')}` 
-      : '';
-
-    // Get total count
-    const countQuery = `
-      SELECT COUNT(*) as total 
-      FROM books b 
-      ${whereClause}
-    `;
-    const [{ total }] = await db.query(countQuery, params);
-
-    // Get paginated books
+    // Simple query without filters for now
     const booksQuery = `
       SELECT 
         b.id,
@@ -589,12 +600,10 @@ router.get('/books', async (req, res, next) => {
         a.last_name
       FROM books b
       LEFT JOIN authors a ON b.author_id = a.id
-      ${whereClause}
       ORDER BY b.created_at DESC
-      LIMIT ? OFFSET ?
     `;
 
-    const books = await db.query(booksQuery, [...params, parseInt(limit), offset]);
+    const books = await db.query(booksQuery);
 
     res.json({
       books: books.map(book => ({
@@ -611,15 +620,94 @@ router.get('/books', async (req, res, next) => {
         } : null
       })),
       pagination: {
-        total: total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        pages: Math.ceil(total / limit)
+        total: books.length,
+        page: 1,
+        limit: books.length,
+        pages: 1
       }
     });
   } catch (error) {
     next(error);
   }
 });
+router.get('/authors', async (req, res, next) => {
+  try {
+    const authorsQuery = `
+      SELECT 
+        a.id,
+        a.first_name,
+        a.last_name,
+        a.biography,
+        a.publisher,
+        a.created_at,
+        COUNT(b.id) as book_count
+      FROM authors a
+      LEFT JOIN books b ON a.id = b.author_id
+      GROUP BY a.id, a.first_name, a.last_name, a.biography, a.publisher, a.created_at
+      ORDER BY a.last_name, a.first_name
+    `;
 
+    const authors = await db.query(authorsQuery);
+
+    res.json({
+      total: authors.length,
+      authors: authors.map(author => ({
+        id: author.id,
+        first_name: author.first_name,
+        last_name: author.last_name,
+        full_name: `${author.first_name} ${author.last_name}`,
+        biography: author.biography,
+        publisher: author.publisher,
+        book_count: author.book_count,
+        created_at: author.created_at
+      }))
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+// Load and display authors
+async function loadAuthors() {
+    const container = document.getElementById('authors-list');
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading authors...</p></div>';
+
+    try {
+        const response = await fetch(`${API_URL}/authors`);
+        
+        if (!response.ok) {
+            throw new Error('Failed to load authors');
+        }
+        
+        const data = await response.json();
+
+        if (data.authors && data.authors.length > 0) {
+            container.innerHTML = `
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3>${data.total}</h3>
+                        <p>Total Authors</p>
+                    </div>
+                </div>
+                ${data.authors.map(author => `
+                    <div class="item-card">
+                        <h3>${author.full_name}</h3>
+                        <p><strong>Publisher:</strong> ${author.publisher}</p>
+                        <p><strong>Biography:</strong> ${author.biography}</p>
+                        <p><strong>Books Published:</strong> ${author.book_count}</p>
+                        <p style="font-size: 0.8em; color: #999; margin-top: 10px;">
+                            Author ID: ${author.id} | Joined: ${new Date(author.created_at).toLocaleDateString()}
+                        </p>
+                    </div>
+                `).join('')}
+            `;
+        } else {
+            container.innerHTML = '<p>No authors found. Create your first author!</p>';
+        }
+    } catch (error) {
+        container.innerHTML = `<p style="color: #721c24; padding: 20px; background: #f8d7da; border-radius: 6px;">
+            Error loading authors: ${error.message}<br>
+            Make sure the server is running and the endpoint exists.
+        </p>`;
+    }
+}
 module.exports = router;
