@@ -1,15 +1,17 @@
 # Dependencies
 node_modules/
+
+# Logs
+*.log
 npm-debug.log*
 
 # Environment
 .env
 .env.local
-.idea
 
-
-# Logs
-*.log
+# IDE
+.idea/
+.vscode/
 
 # OS
 .DS_Store
@@ -21,5 +23,3 @@ coverage/
 # Build
 dist/
 build/
-
-.idea/

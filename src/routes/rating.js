@@ -18,29 +18,29 @@ const db = require('../utils/database');
 // ============================================
 
 /**
- * POST /api/ratings
- * Add a rating and comment
+ * POST /api/ratings/books/:bookId
+ * Add a rating and comment to a book
  * 
  * Body: {
  *   user_id: number,
- *   book_id: number,
- *   rating: number (1–5),
+ *   rating: number,
  *   comment: string
  * }
  */
-router.post('/ratings', async (req, res, next) => {
+router.post('/books/:bookId', async (req, res, next) => {
   try {
-    const { user_id, book_id, rating, comment } = req.body;
+    const { bookId } = req.params;
+    const { user_id, rating, comment } = req.body;
 
     // Validate required fields
-    if (!user_id || !book_id || !rating) {
+    if (!user_id || !rating) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['user_id', 'book_id', 'rating']
+        required: ['user_id', 'rating']
       });
     }
 
-    // Validate rating range
+    // Validate rating
     if (rating < 1 || rating > 5) {
       return res.status(400).json({
         error: 'Invalid rating',
@@ -51,23 +51,23 @@ router.post('/ratings', async (req, res, next) => {
     // Check if book exists
     const bookExists = await db.query(
       'SELECT id FROM books WHERE id = ?',
-      [book_id]
+      [bookId]
     );
 
     if (bookExists.length === 0) {
       return res.status(404).json({
         error: 'Book not found',
-        message: `Book with ID ${book_id} does not exist`
+        message: `Book with ID ${bookId} does not exist`
       });
     }
 
     // Check if user already rated this book
-    const existing = await db.query(
+    const existingRating = await db.query(
       'SELECT id FROM ratings WHERE user_id = ? AND book_id = ?',
-      [user_id, book_id]
+      [user_id, bookId]
     );
 
-    if (existing.length > 0) {
+    if (existingRating.length > 0) {
       return res.status(409).json({
         error: 'Duplicate rating',
         message: 'User has already rated this book'
@@ -78,7 +78,7 @@ router.post('/ratings', async (req, res, next) => {
     const result = await db.query(
       `INSERT INTO ratings (user_id, book_id, rating, comment)
        VALUES (?, ?, ?, ?)`,
-      [user_id, book_id, rating, comment || null]
+      [user_id, bookId, rating, comment || null]
     );
 
     res.status(201).json({
@@ -86,25 +86,36 @@ router.post('/ratings', async (req, res, next) => {
       rating: {
         id: result.insertId,
         user_id,
-        book_id,
+        book_id: parseInt(bookId),
         rating,
-        comment
+        comment: comment || null
       }
     });
-
   } catch (error) {
     next(error);
   }
 });
 
-
 /**
- * GET /api/ratings/book/:bookId
+ * GET /api/ratings/books/:bookId
  * Get all ratings for a book
  */
-router.get('/ratings/book/:bookId', async (req, res, next) => {
+router.get('/books/:bookId', async (req, res, next) => {
   try {
     const { bookId } = req.params;
+
+    // Check if book exists
+    const bookExists = await db.query(
+      'SELECT id, title FROM books WHERE id = ?',
+      [bookId]
+    );
+
+    if (bookExists.length === 0) {
+      return res.status(404).json({
+        error: 'Book not found',
+        message: `Book with ID ${bookId} does not exist`
+      });
+    }
 
     const ratings = await db.query(
       `SELECT 
@@ -120,7 +131,10 @@ router.get('/ratings/book/:bookId', async (req, res, next) => {
     );
 
     res.json({
-      book_id: bookId,
+      book: {
+        id: bookExists[0].id,
+        title: bookExists[0].title
+      },
       total_reviews: ratings.length,
       ratings: ratings.map(r => ({
         id: r.id,
@@ -130,12 +144,10 @@ router.get('/ratings/book/:bookId', async (req, res, next) => {
         created_at: r.created_at
       }))
     });
-
   } catch (error) {
     next(error);
   }
 });
-
 
 /**
  * PUT /api/ratings/:ratingId
@@ -146,18 +158,18 @@ router.get('/ratings/book/:bookId', async (req, res, next) => {
  *   comment?: string
  * }
  */
-router.put('/ratings/:ratingId', async (req, res, next) => {
+router.put('/:ratingId', async (req, res, next) => {
   try {
     const { ratingId } = req.params;
     const updates = req.body;
 
     // Check if rating exists
-    const existing = await db.query(
+    const existingRating = await db.query(
       'SELECT id FROM ratings WHERE id = ?',
       [ratingId]
     );
 
-    if (existing.length === 0) {
+    if (existingRating.length === 0) {
       return res.status(404).json({
         error: 'Rating not found',
         message: `No rating found with ID ${ratingId}`
@@ -172,15 +184,15 @@ router.put('/ratings/:ratingId', async (req, res, next) => {
       });
     }
 
-    // Dynamic update
+    // Build dynamic update query
     const allowedFields = ['rating', 'comment'];
     const updateFields = [];
-    const values = [];
+    const updateValues = [];
 
     for (const [key, value] of Object.entries(updates)) {
       if (allowedFields.includes(key)) {
         updateFields.push(`${key} = ?`);
-        values.push(value);
+        updateValues.push(value);
       }
     }
 
@@ -191,29 +203,27 @@ router.put('/ratings/:ratingId', async (req, res, next) => {
       });
     }
 
-    values.push(ratingId);
+    updateValues.push(ratingId);
 
     await db.query(
       `UPDATE ratings SET ${updateFields.join(', ')} WHERE id = ?`,
-      values
+      updateValues
     );
 
     res.json({
       message: 'Rating updated successfully',
       rating_id: ratingId
     });
-
   } catch (error) {
     next(error);
   }
 });
 
-
 /**
  * DELETE /api/ratings/:ratingId
  * Delete a rating
  */
-router.delete('/ratings/:ratingId', async (req, res, next) => {
+router.delete('/:ratingId', async (req, res, next) => {
   try {
     const { ratingId } = req.params;
 
@@ -233,7 +243,6 @@ router.delete('/ratings/:ratingId', async (req, res, next) => {
       message: 'Rating deleted successfully',
       rating_id: ratingId
     });
-
   } catch (error) {
     next(error);
   }
