@@ -3,7 +3,6 @@ const router = express.Router();
 
 // ---------------------------------------------------------
 // FEATURE 1: Book Browsing and Sorting\
-// Base Route: /api/books (This will be set up in app.js)
 // ---------------------------------------------------------
 
 /**
@@ -36,45 +35,87 @@ router.get('/genre/:genre', (req, res) => {
 
 /**
  * 2. Get top 10 best-selling books
- * Endpoint: GET /api/books/top-sellers
  */
-router.get('/top-sellers', (req, res) => {
+router.get('/top-sellers', async (req, res) => {
 
-    // TODO: Write MySQL query to order books by sales descending, limit 10
-    
-    res.status(200).json({ 
-        message: "This will return the top 10 best-sellers." 
-    });
+       try {
+        const query = `
+            SELECT 
+                book_id,
+                title,
+                author,
+                sales_count
+            FROM BOOKS
+            ORDER BY sales_count DESC
+            LIMIT 10;
+        `;
+
+        const [rows] = await db.query(query);
+
+        res.status(200).json(rows);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ 
+            error: "Server error retrieving top sellers." 
+        });
+    }
 });
 
 /**
  * 3. Get books with a certain rating or higher
- * Endpoint: GET /api/books/rating/:rating
  */
-router.get('/rating/:rating', (req, res) => {
+router.get('/rating/:rating',async (req, res) => {
+    
     const rating = req.params.rating;
 
-    // TODO: Write MySQL query to find books where rating >= requested rating
-    
-    res.status(200).json({ 
-        message: `This will return books with a rating of ${rating} or higher.` 
-    });
+   try {
+        const query = `
+            SELECT 
+                book_id,
+                title,
+                author,
+                rating
+            FROM books
+            WHERE rating >= ?
+            ORDER BY rating DESC
+        `;
+
+        const [rows] = await db.query(query, [rating]);
+
+        res.status(200).json(rows);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Database query failed" });
+    }
 });
 
 /**
- * 4. Update the price of books by a publisher (Apply Discount)
- * Endpoint: PUT /api/books/discount
+ * 4. Update the price of books by a publisher 
  */
-router.put('/discount', (req, res) => {
-    // We expect the publisher name and discount amount to be sent in the request body
-    const { publisher, discountPercentage } = req.body;
+router.put('/discount', async (req, res) => {
 
-    // TODO: Write MySQL query to update prices for this publisher
-    
-    res.status(200).json({ 
-        message: `This will apply a ${discountPercentage}% discount to books published by ${publisher}.` 
-    });
+   const { publisher, discountPercentage } = req.body;
+   try {
+        const query = `
+            UPDATE books
+            SET price = price * (1 - ? / 100)
+            WHERE publisher = ?
+        `;
+
+        const [result] = await db.query(query, [discountPercentage, publisher]);
+
+        res.status(200).json({
+            message: `Applied a ${discountPercentage}% discount to books published by ${publisher}.`,
+            rowsAffected: result.affectedRows
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Database update failed" });
+    }
 });
 
-// Export the router so it can be used by the main app
+
 module.exports = router;
