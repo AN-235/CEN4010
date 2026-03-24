@@ -9,28 +9,28 @@ const router = express.Router();
  * 1. Get books by genre
  * Endpoint: GET /api/books/genre/:genre
  */
-router.get('/genre/:genre', (req, res) => {
+router.get('/genre/:genre', async (req, res) => {
     const genre = req.params.genre;
-    
-   const sql = `
-        SELECT Book_ID, Title, Author, Genre, Price
-        FROM BOOKS
-        WHERE Genre = ?
-    `;
 
-    db.query(sql, [genre], (err, results) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Database error" });
-        }
+    try {
+        const query = `
+            SELECT Book_ID, Title, Author, Genre, Price
+            FROM books
+            WHERE Genre = ?
+        `;
 
-        if (results.length === 0) {
+        const [rows] = await db.query(query, [genre]);
+
+        if (rows.length === 0) {
             return res.status(404).json({ message: "No books found for this genre" });
         }
 
+        res.status(200).json(rows);
 
-    res.status(200).json(results);
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        res.status(500).json({ error: "Database error" });
+    }
 });
 
 /**
@@ -45,7 +45,7 @@ router.get('/top-sellers', async (req, res) => {
                 title,
                 author,
                 sales_count
-            FROM BOOKS
+            FROM books
             ORDER BY sales_count DESC
             LIMIT 10;
         `;
@@ -67,7 +67,7 @@ router.get('/top-sellers', async (req, res) => {
  */
 router.get('/rating/:rating',async (req, res) => {
     
-    const rating = req.params.rating;
+    const rating = parseFloat(req.params.rating);
 
    try {
         const query = `
@@ -96,7 +96,14 @@ router.get('/rating/:rating',async (req, res) => {
  */
 router.put('/discount', async (req, res) => {
 
-   const { publisher, discountPercentage } = req.body;
+   if (!publisher || discountPercentage == null) {
+    return res.status(400).json({ error: "Missing required fields" });
+}
+
+if (discountPercentage < 0 || discountPercentage > 100) {
+    return res.status(400).json({ error: "Invalid discount percentage" });
+}
+
    try {
         const query = `
             UPDATE books
