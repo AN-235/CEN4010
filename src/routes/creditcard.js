@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db/connection');
 
-// CREATE CREDIT CARD (no DAO file)
+// CREATE CREDIT CARD
 router.post('/create/:username', async (req, res) => {
     try {
         const username = req.params.username;
