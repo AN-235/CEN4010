@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile Management</title>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 40px;
+            background: #f5f5f5;
+        }
+        h2 {
+            margin-top: 40px;
+        }
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            width: 400px;
+        }
+        input, button {
+            padding: 8px;
+            margin: 5px 0;
+            width: 100%;
+        }
+        #output {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e8f0fe;
+            border-radius: 8px;
+            white-space: pre-wrap;
+        }
+        .required {
+        color: red;
+        font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Profile Management</h1>
+
+    <!-- Create User -->
+   <div class="box">
+    <h2>Create User</h2>
+
+    <label>Username <span class="required">*</span></label>
+    <input id="cu_username" placeholder="Username">
+
+    <label>Password <span class="required">*</span></label>
+    <input id="cu_password" placeholder="Password">
+
+    <label>Name (optional)</label>
+    <input id="cu_name" placeholder="Name">
+
+    <label>Email (optional)</label>
+    <input id="cu_email" placeholder="Email">
+
+    <label>Home Address (optional)</label>
+    <input id="cu_address" placeholder="Home Address">
+
+    <button onclick="createUser()">Create User</button>
+   </div>
+
+
+
+    <!-- Update User -->
+    <div class="box">
+        <h2>Update User</h2>
+        <input id="uu_username" placeholder="Username">
+        <input id="uu_field" placeholder="Field to Update (email, name, etc)">
+        <input id="uu_value" placeholder="New Value">
+        <button onclick="updateUser()">Update User</button>
+    </div>
+
+    <!-- Get User -->
+    <div class="box">
+        <h2>Get User</h2>
+        <input id="gu_username" placeholder="Username">
+        <button onclick="getUser()">Get User</button>
+    </div>
+
+    <!-- Create Credit Card -->
+    <div class="box">
+        <h2>Create Credit Card</h2>
+        <input id="cc_username" placeholder="Username">
+        <input id="cc_number" placeholder="Card Number">
+        <input id="cc_exp" placeholder="Expiration (MM/YY)">
+        <input id="cc_cvv" placeholder="CVV">
+        <button onclick="createCard()">Create Credit Card</button>
+    </div>
+
+    <h2>Output</h2>
+    <div id="output">Waiting for actions...</div>
+    
+
+<script>
+    const BASE_URL = "http://localhost:8080"; //Example (NOT FINAL)
+
+    function showOutput(data) {
+        document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+    }
+
+    // CREATE USER  --> POST /users
+    async function createUser() {
+        if (!cu_username.value.trim()) {
+            showOutput({ error: "Username is required" });
+            return;
+        }
+
+        if (!cu_password.value.trim()) {
+            showOutput({ error: "Password is required" });
+            return;
+        }
+
+        const body = {
+            username: cu_username.value,
+            password: cu_password.value,
+            name: cu_name.value,
+            email: cu_email.value,
+            homeAddress: cu_address.value
+        };
+
+        try {
+            const res = await fetch(`${BASE_URL}/users`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(body)
+            });
+
+            showOutput(await res.json());
+        } catch (err) {
+            showOutput({ error: err.toString() });
+        }
+    }
+
+    // UPDATE USER --> PUT /users/update/{username}
+    async function updateUser() {
+        const username = uu_username.value;
+
+        const body = {
+            field: uu_field.value,
+            value: uu_value.value
+        };
+
+        try {
+            const res = await fetch(`${BASE_URL}/users/update/${username}`, {
+                method: "PUT",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(body)
+            });
+
+            showOutput(await res.json());
+        } catch (err) {
+            showOutput({ error: err.toString() });
+        }
+    }
+
+    // GET USER --> GET /users/get/{username}
+    async function getUser() {
+        const username = gu_username.value;
+
+        try {
+            const res = await fetch(`${BASE_URL}/users/get/${username}`, {
+                method: "GET"
+            });
+
+            showOutput(await res.json());
+        } catch (err) {
+            showOutput({ error: err.toString() });
+        }
+    }
+
+    // CREATE CREDIT CARD --> POST /cards/create/{username}
+    async function createCard() {
+        const username = cc_username.value;
+
+        const body = {
+            cardNumber: cc_number.value,
+            expiration: cc_exp.value,
+            cvv: cc_cvv.value
+        };
+
+        try {
+            const res = await fetch(`${BASE_URL}/cards/create/${username}`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(body)
+            });
+
+            showOutput(await res.json());
+        } catch (err) {
+            showOutput({ error: err.toString() });
+        }
+    }
+</script>
+
+</body>
+</html>
