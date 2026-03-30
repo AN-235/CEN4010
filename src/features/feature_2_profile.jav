@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db/connection'); 
+const pool = require('../db/database'); 
 
 // CREATE USER
 router.post('/', async (req, res) => {
