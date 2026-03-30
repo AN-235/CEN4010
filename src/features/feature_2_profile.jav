@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db/connection');   // Correct import for your connection.js
+const pool = require('../db/connection'); 
 
 // CREATE USER
 router.post('/', async (req, res) => {
