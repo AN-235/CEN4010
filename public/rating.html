@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RATING DEMO</title>
+
+<style>
+body{
+    background-color: #e6f2ff;
+    text-align: center;
+    margin: 0;
+    font-family: Arial;
+}
+
+.container {
+    padding: 30px;
+}
+
+input, select, textarea {
+    margin: 5px;
+    padding: 8px;
+}
+
+button {
+    padding: 8px 15px;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>⭐ RATING DEMO</h2>
+
+    <label>Book ID:</label>
+    <input type="number" id="bookId" value="1">
+
+    <button onclick="loadRatings()">Load Ratings</button>
+
+    <hr>
+
+    <h3>Add Rating</h3>
+    <label>User ID:</label>
+    <input type="number" id="userId" value="1"><br>
+
+    <label>Rating:</label>
+    <select id="rating">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+    </select><br>
+
+    <textarea id="comment" placeholder="Write comment..."></textarea><br>
+
+    <button onclick="addRating()">Add Rating</button>
+
+    <hr>
+
+    <h3>Ratings</h3>
+    <div id="ratings"></div>
+
+</div>
+
+<script>
+
+async function loadRatings() {
+    const bookId = document.getElementById("bookId").value;
+
+    const res = await fetch(`/api/ratings/books/${bookId}`);
+    const data = await res.json();
+
+    let output = "";
+
+    if (!data.ratings || data.ratings.length === 0) {
+        output = "No ratings found";
+    } else {
+        data.ratings.forEach(item => {
+            output += `
+                <p>
+                    User ${item.user_id} → ⭐ ${item.rating}/5 <br>
+                    ${item.comment || "No comment"}
+                </p>
+                <hr>
+            `;
+        });
+    }
+
+    document.getElementById("ratings").innerHTML = output;
+}
+
+async function addRating() {
+    const bookId = document.getElementById("bookId").value;
+
+    const data = {
+        user_id: parseInt(document.getElementById("userId").value),
+        rating: parseInt(document.getElementById("rating").value),
+        comment: document.getElementById("comment").value
+    };
+
+    const res = await fetch(`/api/ratings/books/${bookId}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    alert(result.message || result.error);
+
+    loadRatings();
+}
+
+</script>
+
+</body>
+</html>

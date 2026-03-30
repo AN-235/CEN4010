@@ -51,7 +51,7 @@ app.use((req, res, next) => {
 // ============================================
 
 // Import route files (create these in src/routes/)
-let booksRoutes, usersRoutes, cartRoutes, bookDetailsRoutes, ratingsRoutes, wishlistsRoutes;
+let booksRoutes, usersRoutes, cartRoutes, bookDetailsRoutes, ratingRoutes, wishlistsRoutes;
 
 try {
   booksRoutes = require('./routes/books');
@@ -78,9 +78,9 @@ try {
 }
 
 try {
-  ratingsRoutes = require('./routes/ratings');
+  ratingRoutes = require('./routes/rating');
 } catch (err) {
-  console.log('⚠️  ratings.js not found - create src/routes/ratings.js');
+  console.log('⚠️  rating.js not found - create src/routes/rating.js');
 }
 
 try {
@@ -149,9 +149,9 @@ if (bookDetailsRoutes) {
   console.log('✓ Admin routes registered at /api/admin');
 }
 
-if (ratingsRoutes) {
-  app.use('/api/ratings', ratingsRoutes);
-  console.log('✓ Ratings routes registered at /api/ratings');
+if (ratingRoutes) {
+  app.use('/api/ratings', ratingRoutes);
+  console.log('✓ Rating routes registered at /api/ratings');
 }
 
 if (wishlistsRoutes) {
