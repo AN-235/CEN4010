@@ -1,3 +1,6 @@
+// TODO: Connect wishlist routes to database
+// TODO: Validate user ownership of wishlist
+// TODO: Integrate with shopping cart service
 const express = require('express');
 const router = express.Router();
 
