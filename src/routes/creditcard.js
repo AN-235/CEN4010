@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db/connection');
+const pool = require('../db/database');
 
 // CREATE CREDIT CARD
 router.post('/create/:username', async (req, res) => {
