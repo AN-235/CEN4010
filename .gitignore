@@ -8,6 +8,8 @@ npm-debug.log*
 # Environment
 .env
 .env.local
+.idea
+
 
 # IDE
 .idea/
@@ -22,4 +24,11 @@ coverage/
 
 # Build
 dist/
+
 build/
+
+.idea/
+=======
+build/
+
+.idea/
