@@ -15,7 +15,7 @@ router.get('/genre/:genre', async (req, res) => {
     try {
         const query = `
             SELECT book_id, title, author, genre, price
-            FROM books
+            FROM BOOKS
             WHERE genre = ?
         `;
 
@@ -29,7 +29,7 @@ router.get('/genre/:genre', async (req, res) => {
 
     } catch (err) {
         console.error("Database error:", err);
-        res.status(500).json({ error: "Database error" });
+        res.status(500).json({ error: "Databasen error" });
     }
 });
 
