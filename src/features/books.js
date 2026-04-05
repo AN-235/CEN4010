@@ -32,6 +32,53 @@ router.get('/genre/:genre', async (req, res) => {
         res.status(500).json({ error: "Databasen error" });
     }
 });
+// Client-side code to handle genre selection and display books
+const genreInputs = document.querySelectorAll('input[name="genre"]');
+
+genreInputs.forEach(input => {
+    input.addEventListener('change', async () => {
+        const genre = input.value;
+
+        try {
+            const response = await fetch(`/api/books/genre/${genre}`);
+            const books = await response.json();
+
+            displayBooks(books);
+        } catch (err) {
+            console.error('Error fetching books:', err);
+        }
+    });
+});
+
+function displayBooks(books) {
+    const bookList = document.getElementById('book-list');
+    bookList.innerHTML = '';
+
+    if (books.length === 0) {
+        bookList.textContent = 'No books found for this genre.';
+        return;
+    }
+
+    const table = document.createElement('table');
+    const headerRow = document.createElement('tr');
+    ['Title', 'Author', 'Genre', 'Price'].forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        headerRow.appendChild(th);
+    });
+    table.appendChild(headerRow);
+
+    books.forEach(book => {
+        const row = document.createElement('tr');
+        [book.title, book.author, book.genre, `$${book.price.toFixed(2)}`].forEach(text => {
+            const td = document.createElement('td');
+            td.textContent = text;
+            row.appendChild(td);
+        });
+        table.appendChild(row);
+    });
+    bookList.appendChild(table);
+}
 
 /**
  * 2. Get top 10 best-selling books
