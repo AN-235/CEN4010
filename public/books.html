@@ -322,3 +322,48 @@
     <label for="selfhelp">Self-Help</label>
 </div>
 <div id="book-list"></div>
+
+<!-- View Top Sellers Panel -->
+        <div id="view-top-sellers" class="panel">
+            <h2>Top Sellers</h2>
+            <div id="top-sellers-list" class="items-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading top sellers...</p>
+                </div>
+            </div>
+        </div>
+
+        
+<!-- View Books Panel -->
+        <div id="book-ratings" class="panel">
+            <h2>Book Ratings</h2>
+            <div id="ratings-list" class="items-list">
+                
+                </div>
+            </div>
+        </div>
+<!-- Admin View Panel -->
+        <div id="admin-view" class="panel">
+            <h2>Admin View</h2>
+            <p>Admin functionalities will be displayed here.</p>
+        </div>
+    </div>  
+
+   
+<script>
+        function showTab(tabName) {
+            const panels = document.querySelectorAll('.panel');
+            panels.forEach(panel => {
+                panel.classList.remove('active');
+            });
+
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            document.getElementById(tabName.toLowerCase().replace(/ /g, '-')).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
