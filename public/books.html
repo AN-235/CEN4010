@@ -247,7 +247,35 @@
             border-radius: 6px;
             font-size: 1em;
         }
-     </style>
+      
+        
+.genre-btn input {
+    display: none;
+}
+
+.genre-btn label {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    margin: 4px;
+    cursor: pointer;
+    border-radius: 6px;
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+/* Hover effect */
+.genre-btn label:hover {
+    background-color: #f0f0f0;
+}
+
+/* Selected button */
+.genre-btn input:checked + label {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+        </style>
+
 </head>
 <body>
  <div class="container">
@@ -262,34 +290,17 @@
             <button class="tab" onclick="showTab('Admin View')">Admin View</button>
         </div>
 
+    
+
 <!-- Book Hub Panel -->
-        <div id="book-hub" class="panel active">
+      <div id="book-hub" class="panel active">
             <h2>Welcome to the Book Hub! </h2>
             <p>Select a genre to browse books.</p>
 
-            </div>
-        <div class="form-group">
-                        
-                      <style>
-.genre-btn input {
-    display: none;
-}
+        
 
-.genre-btn label {
-    padding: 8px 12px;
-    border: 1px solid #ccc;
-    margin: 4px;
-    cursor: pointer;
-    border-radius: 5px;
-    display: inline-block;
-}
-
-.genre-btn input:checked + label {
-    background-color: #007bff;
-    color: white;
-}
-</style>
-
+     <div class="form-group">
+                 
 <div class="genre-btn">
     <input type="radio" id="fiction" name="genre" value="Fiction" required>
     <label for="fiction">Fiction</label>
@@ -321,22 +332,54 @@
     <input type="radio" id="selfhelp" name="genre" value="Self-Help">
     <label for="selfhelp">Self-Help</label>
 </div>
+
 <div id="book-list"></div>
 
+</div>
+</div>
+
 <script>
-    fetch('/api/books')
-      .then(res => res.json())
-      .then(books => {
-        const ul = document.getElementById('books-list');
+async function loadBooks(genre) {
+    try {
+        const response = await fetch(`/api/books/genre/${genre}`);
+        const books = await response.json();
+
+        const container = document.getElementById("book-list");
+        container.innerHTML = "";
+
         books.forEach(book => {
-          const li = document.createElement('li');
-          li.textContent = `${book.title} by ${book.author} (${book.genre})`;
-          ul.appendChild(li);
+            const div = document.createElement("div");
+            div.innerHTML = `
+                <h3>${book.title}</h3>
+                <p>Author: ${book.author}</p>
+                <p>Genre: ${book.genre}</p>
+                <p>Price: $${book.price}</p>
+                <hr>
+            `;
+            container.appendChild(div);
         });
-      })
-      .catch(err => console.error(err));
-  </script>
-        </div>      
+    } catch (err) {
+        console.error("Error loading books:", err);
+    }
+}
+// Load books for selected genre when radio changes
+document.querySelectorAll('input[name="genre"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+        loadBooks(this.value);
+    });
+});
+
+window.onload = () => {
+    const defaultGenre = document.querySelector('input[name="genre"]:checked');
+    if (defaultGenre) {
+        loadBooks(defaultGenre.value);
+    }
+};
+</script>
+
+
+
+
 
 <!-- View Top Sellers Panel -->
         <div id="view-top-sellers" class="panel">
@@ -357,13 +400,13 @@
                 
                 </div>
             </div>
-        </div>
+        
 <!-- Admin View Panel -->
         <div id="admin-view" class="panel">
             <h2>Admin View</h2>
             <p>Admin functionalities will be displayed here.</p>
         </div>
-    </div>  
+    
 
    
 <script>
@@ -382,3 +425,8 @@
             event.target.classList.add('active');
         }
     </script>
+   
+</div>
+</body>
+</html>     
+
