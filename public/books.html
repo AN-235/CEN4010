@@ -323,6 +323,21 @@
 </div>
 <div id="book-list"></div>
 
+<script>
+    fetch('/api/books')
+      .then(res => res.json())
+      .then(books => {
+        const ul = document.getElementById('books-list');
+        books.forEach(book => {
+          const li = document.createElement('li');
+          li.textContent = `${book.title} by ${book.author} (${book.genre})`;
+          ul.appendChild(li);
+        });
+      })
+      .catch(err => console.error(err));
+  </script>
+        </div>      
+
 <!-- View Top Sellers Panel -->
         <div id="view-top-sellers" class="panel">
             <h2>Top Sellers</h2>
