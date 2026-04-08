@@ -15,7 +15,7 @@ router.get('/genre/:genre', async (req, res) => {
     try {
         const query = `
             SELECT book_id, title, author, genre, price
-            FROM BOOKS
+            FROM books
             WHERE genre = ?
         `;
 
