@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-
+const db = require('../utils/database');
 // ---------------------------------------------------------
 // FEATURE 1: Book Browsing and Sorting\
 // ---------------------------------------------------------
@@ -14,12 +14,14 @@ router.get('/genre/:genre', async (req, res) => {
 
     try {
         const query = `
-            SELECT Book_ID, Title, Author, Genre, Price
+            SELECT Book_ID, Title, Author, Publisher, Price, Rating
             FROM books
             WHERE Genre = ?
         `;
 
-        const [rows] = await db.query(query, [genre]);
+        const [rows] = await db.pool.query(query, [genre]);
+        console.log("rows:", rows);
+        console.log("is array:", Array.isArray(rows)); 
 
         if (rows.length === 0) {
             return res.status(404).json({ message: "No books found for this genre" });
@@ -29,8 +31,13 @@ router.get('/genre/:genre', async (req, res) => {
 
     } catch (err) {
         console.error("Database error:", err);
-        res.status(500).json({ error: "Database error" });
+        res.status(500).json({ 
+            error: "Database error" ,
+            detail: err.message,  
+            code: err.code   
+        });
     }
+
 });
 
 /**
@@ -44,13 +51,14 @@ router.get('/top-sellers', async (req, res) => {
                 book_id,
                 title,
                 author,
-                sales_count
+                genre,
+                copies_sold
             FROM books
-            ORDER BY sales_count DESC
+            ORDER BY copies_sold DESC
             LIMIT 10;
         `;
 
-        const [rows] = await db.query(query);
+        const [rows] = await db.pool.query(query);
 
         res.status(200).json(rows);
 
@@ -77,12 +85,11 @@ router.get('/rating/:rating',async (req, res) => {
                 author,
                 rating
             FROM books
-            WHERE rating >= ?
+            WHERE FLOOR(rating) = ? 
             ORDER BY rating DESC
         `;
 
-        const [rows] = await db.query(query, [rating]);
-
+        const [rows] = await db.pool.query(query, [rating]);
         res.status(200).json(rows);
 
     } catch (error) {
@@ -95,6 +102,8 @@ router.get('/rating/:rating',async (req, res) => {
  * 4. Update the price of books by a publisher 
  */
 router.put('/discount', async (req, res) => {
+const { publisher, discountPercentage } = req.body;
+
 
    if (!publisher || discountPercentage == null) {
     return res.status(400).json({ error: "Missing required fields" });
@@ -111,7 +120,7 @@ if (discountPercentage < 0 || discountPercentage > 100) {
             WHERE publisher = ?
         `;
 
-        const [result] = await db.query(query, [discountPercentage, publisher]);
+        const [result] = await db.pool.query(query, [discountPercentage, publisher]);
 
         res.status(200).json({
             message: `Applied a ${discountPercentage}% discount to books published by ${publisher}.`,

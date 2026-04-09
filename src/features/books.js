@@ -20,7 +20,10 @@ router.get('/genre/:genre', async (req, res) => {
             WHERE genre = ?
         `;
 
-        const rows = await db.query(query, [genre]);
+        const [rows] = await db.pool.query(query, [genre]);
+        console.log("rows:", rows); 
+        console.log("is array:", Array.isArray(rows)); 
+
 
         if (rows.length === 0) {
             return res.status(404).json({ message: "No books found for this genre" });

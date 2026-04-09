@@ -259,6 +259,7 @@
             <button class="tab" onclick="showTab('create-book')">Create Book</button>
             <button class="tab" onclick="showTab('view-authors')">View Authors</button>
             <button class="tab" onclick="showTab('view-books')">View Books</button>
+            <button class="tab" onclick="showTab('publisher-discount')">Publisher Discount</button>. <!-- New tab for the discount feature -->
         </div>
 
         <!-- Create Author Panel -->
@@ -376,6 +377,34 @@
             </div>
         </div>
     </div>
+
+<!-- Publisher Discount Panel -->
+        <div id="publisher-discount" class="panel">
+            <h2>Apply Publisher Discount</h2>
+            <div id="discount-message" class="message"></div>
+
+            <div class="form-group">
+                <label for="publisher">Select Publisher:</label>
+                <select id="publisher">
+                    <option value="">-- Select Publisher --</option>
+                    <option value="Penguin Random House">Penguin Random House</option>
+                    <option value="HarperCollins">HarperCollins</option>
+                    <option value="Crown Publishing">Crown Publishing</option>
+                    <option value="Ace Books">Ace Books</option>
+                    <option value="Hachette Book Group">Hachette Book Group</option>
+                    <option value="Simon & Schuster">Simon & Schuster</option>
+                    <option value="Macmillan Publishers">Macmillan Publishers</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="discount">Discount Percentage (0-100):</label>
+                <input type="number" id="discount" min="0" max="100" placeholder="e.g. 10">
+            </div>
+
+            <button onclick="applyDiscount()">Apply Discount</button>
+        </div>
+
 
     <script>
         const API_URL = 'http://localhost:5000/api/admin';
@@ -587,8 +616,52 @@ async function loadAuthors() {
             });
         });
 
+        
+// Apply publisher discount
+async function applyDiscount() {
+    const publisher = document.getElementById('publisher').value;
+    const discountPercentage = parseFloat(document.getElementById('discount').value);
+    const messageBox = document.getElementById('discount-message');
+
+    if (!publisher) {
+        messageBox.className = 'message error show';
+        messageBox.textContent = 'Please select a publisher.';
+        return;
+    }
+
+    if (isNaN(discountPercentage) || discountPercentage < 0 || discountPercentage > 100) {
+        messageBox.className = 'message error show';
+        messageBox.textContent = 'Please enter a valid discount between 0 and 100.';
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:5001/api/books/discount', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ publisher, discountPercentage })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            messageBox.className = 'message success show';
+            messageBox.textContent = data.message;
+        } else {
+            messageBox.className = 'message error show';
+            messageBox.textContent = data.error || 'Something went wrong.';
+        }
+    } catch (err) {
+        messageBox.className = 'message error show';
+        messageBox.textContent = 'Error connecting to server.';
+    }
+}
+
         // Initialize
         loadAuthorsDropdown();
     </script>
+
+
+
 </body>
 </html>

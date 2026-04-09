@@ -287,14 +287,14 @@
             <button class="tab active" onclick="showTab('Book Hub')">Book Hub</button>
             <button class="tab" onclick="showTab('View Top Sellers')">View Top Sellers</button>
             <button class="tab" onclick="showTab('Book Ratings')">Book Ratings</button>
-            <button class="tab" onclick="showTab('Admin View')">Admin View</button>
+            
         </div>
 
     
 
 <!-- Book Hub Panel -->
       <div id="book-hub" class="panel active">
-            <h2>Welcome to the Book Hub! </h2>
+            <h2>📚 Book Hub </h2>
             <p>Select a genre to browse books.</p>
 
         
@@ -337,35 +337,47 @@
 
 </div>
 </div>
-
 <script>
 async function loadBooks(genre) {
     try {
+       
         const response = await fetch(`/api/books/genre/${genre}`);
-        const books = await response.json();
-
+        const data = await response.json();
         const container = document.getElementById("book-list");
         container.innerHTML = "";
 
-        books.forEach(book => {
+      
+        if (!Array.isArray(data)) {
+            container.innerHTML = `<p>No books found for this genre.</p>`;
+            return;
+        }
+
+        data.forEach(book => {
             const div = document.createElement("div");
             div.innerHTML = `
-                <h3>${book.title}</h3>
-                <p>Author: ${book.author}</p>
-                <p>Genre: ${book.genre}</p>
-                <p>Price: $${book.price}</p>
+                <h3>${book.Title}</h3>
+                <p>Author: ${book.Author}</p>
+                <p>Publisher: ${book.Publisher}</p>
+                <p>Price: $${book.Price}</p>
+                <p>Rating: ⭐ ${book.Rating}</p>
                 <hr>
             `;
             container.appendChild(div);
         });
     } catch (err) {
         console.error("Error loading books:", err);
+        const container = document.getElementById("book-list");
+        container.innerHTML = `<p>Error loading bodoks. Please try again later.</p>`;    
     }
 }
 // Load books for selected genre when radio changes
-document.querySelectorAll('input[name="genre"]').forEach(radio => {
-    radio.addEventListener('change', function () {
-        loadBooks(this.value);
+document.querySelectorAll('.genre-btn label').forEach(label => {
+   label.addEventListener('click', function () {
+        const input = document.getElementById(this.getAttribute('for'));
+        if (input) {
+            
+            loadBooks(input.value);
+        }
     });
 });
 
@@ -375,6 +387,7 @@ window.onload = () => {
         loadBooks(defaultGenre.value);
     }
 };
+
 </script>
 
 
@@ -382,48 +395,128 @@ window.onload = () => {
 
 
 <!-- View Top Sellers Panel -->
+
         <div id="view-top-sellers" class="panel">
-            <h2>Top Sellers</h2>
-            <div id="top-sellers-list" class="items-list">
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>Loading top sellers...</p>
-                </div>
-            </div>
-        </div>
+    <h2>🏆 Top Sellers</h2>
+    <div id="top-sellers-list" class="items-list"></div>
+</div>
+<script> async function loadTopSellers() {
+   
+    try {
+        const response = await fetch('http://localhost:5001/api/books/top-sellers');
+        const data = await response.json();
+
+        const container = document.getElementById("top-sellers-list");
+        container.innerHTML = "";
+
+        data.forEach((book, index) => {
+            const div = document.createElement("div");
+            div.innerHTML = `
+                <h3>#${index + 1} ${book.title}</h3>
+                <p>Author: ${book.author}</p>
+                <p>Genre: ${book.genre}</p>
+                <p>Copies Sold: ${book.copies_sold}</p>
+                <hr>
+            `;
+            container.appendChild(div);
+        });
+    } catch (err) {
+       console.error("Error loading top sellers:", err);
+    }
+}
+function showTab(tabName) {
+    const panels = document.querySelectorAll('.panel');
+    panels.forEach(panel => panel.classList.remove('active'));
+
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => tab.classList.remove('active'));
+
+    document.getElementById(tabName.toLowerCase().replace(/ /g, '-')).classList.add('active');
+    event.target.classList.add('active');
+
+    // Load data for each tab
+    if (tabName === 'View Top Sellers') loadTopSellers();
+}</script>
+
 
         
 <!-- View Books Panel -->
         <div id="book-ratings" class="panel">
-            <h2>Book Ratings</h2>
-            <div id="ratings-list" class="items-list">
-                
-                </div>
-            </div>
-        
-<!-- Admin View Panel -->
-        <div id="admin-view" class="panel">
-            <h2>Admin View</h2>
-            <p>Admin functionalities will be displayed here.</p>
-        </div>
+    <h2>⭐ Book Ratings</h2>
+    <p>Select a minimum rating to browse books.</p>
+
+    <div class="genre-btn">
+        <input type="radio" id="rating1" name="rating" value="1">
+        <label for="rating1">1+ Stars</label>
+
+        <input type="radio" id="rating2" name="rating" value="2">
+        <label for="rating2">2+ Stars</label>
+
+        <input type="radio" id="rating3" name="rating" value="3">
+        <label for="rating3">3+ Stars</label>
+
+        <input type="radio" id="rating4" name="rating" value="4">
+        <label for="rating4">4+ Stars</label>
+
+        <input type="radio" id="rating5" name="rating" value="5">
+        <label for="rating5">5 Stars</label>
+    </div>
+
+    <div id="ratings-list" class="items-list"></div>
+</div>
+
+
+<script>    
+    async function loadRatings(minRating) {
+    try {
+        const response = await fetch(`http://localhost:5001/api/books/rating/${minRating}`);
+        const data = await response.json();
+
+        const container = document.getElementById("ratings-list");
+        container.innerHTML = "";
+
+        if (!Array.isArray(data) || data.length === 0) {
+            container.innerHTML = `<p>No books found with this rating.</p>`;
+            return;
+        }
+
+        data.forEach(book => {
+            const div = document.createElement("div");
+            div.innerHTML = `
+                <h3>${book.title}</h3>
+                <p>Author: ${book.author}</p>
+                <p>Rating: ⭐ ${book.rating}</p>
+                <hr>
+            `;
+            container.appendChild(div);
+        });
+    } catch (err) {
+        console.error("Error loading ratings:", err);
+    }
+}
+
+document.querySelectorAll('input[name="rating"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        loadRatings(this.value);
+    });
+});
+</script>
     
 
    
 <script>
-        function showTab(tabName) {
-            const panels = document.querySelectorAll('.panel');
-            panels.forEach(panel => {
-                panel.classList.remove('active');
-            });
+   function showTab(tabName) {
+    const panels = document.querySelectorAll('.panel');
+    panels.forEach(panel => panel.classList.remove('active'));
 
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => {
-                tab.classList.remove('active');
-            });
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => tab.classList.remove('active'));
 
-            document.getElementById(tabName.toLowerCase().replace(/ /g, '-')).classList.add('active');
-            event.target.classList.add('active');
-        }
+    document.getElementById(tabName.toLowerCase().replace(/ /g, '-')).classList.add('active');
+    event.target.classList.add('active');
+
+    if (tabName === 'View Top Sellers') loadTopSellers();
+}
     </script>
    
 </div>
