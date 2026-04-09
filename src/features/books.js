@@ -29,7 +29,12 @@ router.get('/genre/:genre', async (req, res) => {
 
     } catch (err) {
         console.error("Database error:", err);
-        res.status(500).json({ error: "Databasen error" });
+        res.status(500).json({ 
+            error: "Databasen error" ,
+            detail: err.message,  
+            code: err.code   
+        });
+
     }
 });
 
