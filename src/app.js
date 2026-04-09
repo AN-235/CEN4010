@@ -259,6 +259,7 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
+app.use('/api/cart', cartRoutes);
 // Start the server
 startServer();
 
