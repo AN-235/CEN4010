@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db/database');
 
+// CREATE USER (POST)
 router.post('/', async (req, res) => {
     try {
         const { username, password, name, email, homeAddress } = req.body;
@@ -24,7 +25,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-// GET USER BY USERNAME (Retrieve package, no DAO file)
+// GET USER BY USERNAME (GET)
 router.get('/get/:username', async (req, res) => {
     try {
         const username = req.params.username;
@@ -52,18 +53,18 @@ router.get('/get/:username', async (req, res) => {
     }
 });
 
-// UPDATE USER (Update package, no DAO file)
+// UPDATE USER (PUT)
 router.put('/update/:username', async (req, res) => {
     try {
         const username = req.params.username;
         const { field, value } = req.body;
 
-        // Validate method (Express already ensures PUT, but we keep logic consistent)
+        // Validate method
         if (!field || !value) {
             return res.status(400).json({ error: "Missing field or value" });
         }
 
-        // Block email updates (same as Java)
+        // Block email updates
         if (field.toLowerCase() === "email") {
             return res.status(400).json({ error: "Email cannot be updated." });
         }
