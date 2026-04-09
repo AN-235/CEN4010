@@ -434,25 +434,45 @@
         });
 
         // Load authors for dropdown
-        async function loadAuthorsDropdown() {
-            try {
-                const response = await fetch(`${API_URL}/authors`);
-                if (!response.ok) return;
-                
-                const authors = await response.json();
-                const select = document.getElementById('book-author');
-                select.innerHTML = '<option value="">Select an author...</option>';
-                
-                authors.forEach(author => {
-                    const option = document.createElement('option');
-                    option.value = author.id;
-                    option.textContent = `${author.first_name} ${author.last_name}`;
-                    select.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error loading authors:', error);
-            }
+        // Load authors for dropdown
+async function loadAuthorsDropdown() {
+    try {
+        const response = await fetch(`${API_URL}/authors`);
+        
+        if (!response.ok) {
+            console.error('Failed to load authors for dropdown');
+            return;
         }
+        
+        const data = await response.json();
+        const select = document.getElementById('book-author');
+        
+        // Clear existing options
+        select.innerHTML = '<option value="">Select an author...</option>';
+        
+        // Check if we got the expected format
+        if (data.authors && Array.isArray(data.authors)) {
+            data.authors.forEach(author => {
+                const option = document.createElement('option');
+                option.value = author.id;
+                option.textContent = `${author.first_name} ${author.last_name}`;
+                select.appendChild(option);
+            });
+        } else if (Array.isArray(data)) {
+            // Fallback: if data is directly an array
+            data.forEach(author => {
+                const option = document.createElement('option');
+                option.value = author.id;
+                option.textContent = `${author.first_name} ${author.last_name}`;
+                select.appendChild(option);
+            });
+        } else {
+            console.error('Unexpected data format:', data);
+        }
+    } catch (error) {
+        console.error('Error loading authors for dropdown:', error);
+    }
+}
 
         // Create Book
         document.getElementById('bookForm').addEventListener('submit', async (e) => {
