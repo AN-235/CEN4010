@@ -97,21 +97,17 @@
     
 
 <script>
-    const BASE_URL = "http://localhost:8080"; //Example (NOT FINAL)
+    const BASE_URL = "http://localhost:5000/api";
 
-    function showOutput(data) {
-        document.getElementById("output").textContent = JSON.stringify(data, null, 2);
-    }
-
-    // CREATE USER  --> POST /users
+    // CREATE USER
     async function createUser() {
         if (!cu_username.value.trim()) {
-            showOutput({ error: "Username is required" });
+            document.getElementById("output").textContent = "error: Username is required";
             return;
         }
 
         if (!cu_password.value.trim()) {
-            showOutput({ error: "Password is required" });
+            document.getElementById("output").textContent = "error: Password is required";
             return;
         }
 
@@ -119,7 +115,7 @@
             username: cu_username.value,
             password: cu_password.value,
             name: cu_name.value,
-            email: cu_email.value,
+            email: cu_email.value || null,
             homeAddress: cu_address.value
         };
 
@@ -130,13 +126,16 @@
                 body: JSON.stringify(body)
             });
 
-            showOutput(await res.json());
+            const data = await res.json();
+            document.getElementById("output").textContent =
+                Object.entries(data).map(([k,v]) => `${k}: ${v}`).join("\n");
+
         } catch (err) {
-            showOutput({ error: err.toString() });
+            document.getElementById("output").textContent = "error: " + err.toString();
         }
     }
 
-    // UPDATE USER --> PUT /users/update/{username}
+    // UPDATE USER
     async function updateUser() {
         const username = uu_username.value;
 
@@ -152,28 +151,35 @@
                 body: JSON.stringify(body)
             });
 
-            showOutput(await res.json());
+            const data = await res.json();
+            document.getElementById("output").textContent =
+                Object.entries(data).map(([k,v]) => `${k}: ${v}`).join("\n");
+
         } catch (err) {
-            showOutput({ error: err.toString() });
+            document.getElementById("output").textContent = "error: " + err.toString();
         }
     }
 
-    // GET USER --> GET /users/get/{username}
+    // GET USER
     async function getUser() {
         const username = gu_username.value;
 
         try {
-            const res = await fetch(`${BASE_URL}/users/get/${username}`, {
-                method: "GET"
-            });
+            const res = await fetch(`${BASE_URL}/users/get/${username}`);
+            const data = await res.json();
 
-            showOutput(await res.json());
+            document.getElementById("output").textContent =
+                Object.entries(data)
+                    .map(([k, v]) => `${k}: ${v === null ? "" : v}`)
+                    .join("\n");
+
+
         } catch (err) {
-            showOutput({ error: err.toString() });
+            document.getElementById("output").textContent = "error: " + err.toString();
         }
     }
 
-    // CREATE CREDIT CARD --> POST /cards/create/{username}
+    // CREATE CREDIT CARD
     async function createCard() {
         const username = cc_username.value;
 
@@ -184,18 +190,22 @@
         };
 
         try {
-            const res = await fetch(`${BASE_URL}/cards/create/${username}`, {
+            const res = await fetch(`${BASE_URL}/users/${username}/creditcard`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(body)
             });
 
-            showOutput(await res.json());
+            const data = await res.json();
+            document.getElementById("output").textContent =
+                Object.entries(data).map(([k,v]) => `${k}: ${v}`).join("\n");
+
         } catch (err) {
-            showOutput({ error: err.toString() });
+            document.getElementById("output").textContent = "error: " + err.toString();
         }
     }
 </script>
+
 
 </body>
 </html>
