@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db/database');
+const pool = require('../utils/database');
 
-// CREATE USER (POST)
+
+// CREATE USER
 router.post('/', async (req, res) => {
     try {
         const { username, password, name, email, homeAddress } = req.body;
@@ -25,15 +26,16 @@ router.post('/', async (req, res) => {
     }
 });
 
-// GET USER BY USERNAME (GET)
+
+// GET USER BY USERNAME
 router.get('/get/:username', async (req, res) => {
     try {
         const username = req.params.username;
 
         const sql = "SELECT * FROM users WHERE username = ?";
-        const [rows] = await pool.query(sql, [username]);
+        const rows = await pool.query(sql, [username]);
 
-        if (rows.length === 0) {
+        if (!rows || rows.length === 0) {
             return res.status(404).json({ error: "User not found" });
         }
 
@@ -49,27 +51,26 @@ router.get('/get/:username', async (req, res) => {
 
     } catch (err) {
         console.error(err);
+
         res.status(500).json({ error: "Internal server error" });
     }
 });
 
-// UPDATE USER (PUT)
+
+// UPDATE USER
 router.put('/update/:username', async (req, res) => {
     try {
         const username = req.params.username;
         const { field, value } = req.body;
 
-        // Validate method
         if (!field || !value) {
             return res.status(400).json({ error: "Missing field or value" });
         }
 
-        // Block email updates
         if (field.toLowerCase() === "email") {
             return res.status(400).json({ error: "Email cannot be updated." });
         }
 
-        // Map Java field names to SQL column names
         let column;
         switch (field) {
             case "password": column = "password"; break;
@@ -79,21 +80,52 @@ router.put('/update/:username', async (req, res) => {
                 return res.status(400).json({ error: "Invalid field: " + field });
         }
 
-        // Build SQL
         const sql = `UPDATE users SET ${column} = ? WHERE username = ?`;
+        const result = await pool.query(sql, [value, username]);
 
-        // Execute update
-        const [result] = await pool.query(sql, [value, username]);
-
-        // If no user found
-        if (result.affectedRows === 0) {
+        if (!result || result.affectedRows === 0) {
             return res.status(404).json({ error: "User not found" });
         }
 
-        // SUCCESS RESPONSE
-        res.json({
+
+        res.json({ status: "success", message: "User updated" });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+
+// CREATE CREDIT CARD FOR USER
+router.post('/:username/creditcard', async (req, res) => {
+    try {
+        const username = req.params.username;
+        const { cardNumber, expiration, cvv } = req.body;
+
+        if (!cardNumber || !expiration || !cvv) {
+            return res.status(400).json({ error: "Missing credit card fields" });
+        }
+
+        const [userRows] = await pool.query(
+            "SELECT * FROM users WHERE username = ?",
+            [username]
+        );
+
+        if (userRows.length === 0) {
+            return res.status(400).json({ error: "Incorrect username" });
+        }
+
+        const sql = `
+            INSERT INTO credit_cards (username, card_number, expiration, cvv)
+            VALUES (?, ?, ?, ?)
+        `;
+
+        await pool.query(sql, [username, cardNumber, expiration, cvv]);
+
+        res.status(201).json({
             status: "success",
-            message: "User updated"
+            message: "Credit card created"
         });
 
     } catch (err) {
